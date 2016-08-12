@@ -1,0 +1,24 @@
+resolver: lts-6.5
+packages:
+- '.'
+- location: ../Lib-PrimitiveArray
+  extra-dep: true
+- location: ../Lib-OrderedBits
+  extra-dep: true
+- location: ../Lib-ADPfusion
+  extra-dep: true
+- location: ../Lib-DPutils
+  extra-dep: true
+
+extra-deps:
+- OneTuple-0.2.1
+- tuple-0.3.0.2
+
+flags:
+  ADPfusionSet:
+    examples: true
+    debug: true
+
+ghc-options:
+  ADPfusionSet: -fllvm -optlo-O3 -optlo-mem2reg -optlo-indvars -optlo-loop-simplify
+
