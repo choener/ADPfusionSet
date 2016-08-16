@@ -3,7 +3,7 @@
 -- for the more right-most symbols, which request a number of reserved
 -- bits.
 
-module ADP.Fusion.Base.Set where
+module ADP.Fusion.Core.Set where
 
 import Data.Proxy
 import Data.Vector.Fusion.Stream.Monadic (singleton,filter,enumFromStepN,map,unfoldr)
@@ -14,8 +14,8 @@ import Data.Bits.Ordered
 
 import Data.PrimitiveArray hiding (map)
 
-import ADP.Fusion.Base.Classes
-import ADP.Fusion.Base.Multi
+import ADP.Fusion.Core.Classes
+import ADP.Fusion.Core.Multi
 
 
 
@@ -114,7 +114,7 @@ instance
   mkStream S (OStatic rb) u s
     = staticCheck (rb + popCount s <= popCount u) . singleton . ElmS $ RiBsO s s
   mkStream S (ORightOf _) u s
-    = error "ADP.Fusion.Base.Set: Entered ORightOf/BitSet (this is probably wrong because it means we have an outside cfg with only terminals on the r.h.s, and the terminals are not a single Outside-Epsilon)"
+    = error "ADP.Fusion.Core.Set: Entered ORightOf/BitSet (this is probably wrong because it means we have an outside cfg with only terminals on the r.h.s, and the terminals are not a single Outside-Epsilon)"
   mkStream S (OFirstLeft rb) u s
     = staticCheck (rb + popCount s <= popCount u) . singleton . ElmS $ RiBsO s s
 --  mkStream S (OLeftOf rp) u s

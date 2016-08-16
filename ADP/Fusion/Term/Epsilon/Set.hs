@@ -10,7 +10,7 @@ import ADP.Fusion.Core
 import Data.Bits.Ordered
 import Data.PrimitiveArray hiding (map)
 
-import ADP.Fusion.Base.Set
+import ADP.Fusion.Core.Set
 
 
 
