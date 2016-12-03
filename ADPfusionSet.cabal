@@ -57,7 +57,7 @@ library
                , ADPfusion          == 0.5.2.*
                , DPutils            >= 0.0.0    &&  < 0.0.2
                , OrderedBits        == 0.0.1.*
-               , PrimitiveArray     == 0.7.1.*
+               , PrimitiveArray     == 0.7.2.*
 
   exposed-modules:
     -- multi imports
@@ -68,6 +68,8 @@ library
     ADP.Fusion.Term.Chr.Set0
     ADP.Fusion.Term.Edge.Set
     ADP.Fusion.Term.Epsilon.Set
+    ADP.Fusion.Term.Vertex.Set2
+    ADP.Fusion.Term.Vertex.Type
 
   default-extensions: BangPatterns
                     , ConstraintKinds
