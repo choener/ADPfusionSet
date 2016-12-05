@@ -22,6 +22,8 @@ import ADP.Fusion.Core.Set
 
 
 
+{-
+
 -- * Bitsets without any boundaries
 --
 -- TODO outside and complement code
@@ -154,4 +156,6 @@ instance
 --  addIndexDenseGo (cs:.c) (vs:.OFirstLeft rb) (us:.u) (is:.i)
 --    = error "ping"
 --  {-# Inline addIndexDenseGo #-}
+
+-}
 

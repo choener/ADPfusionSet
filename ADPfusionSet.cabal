@@ -68,8 +68,8 @@ library
     ADP.Fusion.Term.Chr.Set0
     ADP.Fusion.Term.Edge.Set
     ADP.Fusion.Term.Epsilon.Set
-    ADP.Fusion.Term.Vertex.Set2
-    ADP.Fusion.Term.Vertex.Type
+    ADP.Fusion.Term.Singleton.Set2
+    ADP.Fusion.Term.Singleton.Type
 
   default-extensions: BangPatterns
                     , ConstraintKinds
