@@ -137,10 +137,12 @@ instance
 instance
   ( Monad m
   ) => MkStream m S (BS2 First Last O) where
+  mkStream = error "Core.Set.hs :: MkStream S BS2 O"
 
 instance
   ( Monad m
   ) => MkStream m S (BS2 First Last C) where
+  mkStream = error "Core.Set.hs :: MkStream S BS2 C"
 
 
 
