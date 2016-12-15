@@ -1,8 +1,5 @@
 
--- | Singleton vertices are only introduced into a set structure, if no
--- vertex has been placed yet.
-
-module ADP.Fusion.Term.Singleton.Set2 where
+module ADP.Fusion.Term.Edge.Set2 where
 
 import Data.Bits
 import Data.Strict.Tuple
@@ -15,18 +12,35 @@ import Data.Bits.Ordered
 import Data.PrimitiveArray hiding (map)
 
 import ADP.Fusion.Core.Set
-import ADP.Fusion.Term.Singleton.Type
+import ADP.Fusion.Term.Edge.Type
+
 
 
 instance
-  ( TmkCtx1 m ls (Singleton v) (BS2 First Last i)
-  ) => MkStream m (ls :!: Singleton v) (BS2 First Last i) where
-  mkStream (ls :!: Singleton f) sv us is
-    = map (\(ss,ee,ii) -> ElmSingleton ee ii ss)
-    . addTermStream1 (Singleton f) sv us is
-    $ mkStream ls (termStaticVar (Singleton f) sv is) us (termStreamIndex (Singleton f) sv is)
+  ( TmkCtx1 m ls (Edge e) (BS2 First Last i)
+  ) => MkStream m (ls :!: Edge e) (BS2 First Last i) where
+  mkStream (ls :!: Edge f) sv us is
+    = map (\(ss,ee,ii) -> ElmEdge ee ii ss)
+    . addTermStream1 (Edge f) sv us is
+    $ mkStream ls (termStaticVar (Edge f) sv is) us (termStreamIndex (Edge f) sv is)
   {-# Inline mkStream #-}
 
+instance
+  (
+  ) => AddIndexDense s (us:.BS2 First Last I) (cs:.c) (is:.BS2 First Last I) where
+  -- In the static case we should now have exactly one free bit.
+  addIndexDenseGo (cs:.c) (vs:.IStatic rb) (us:.u) (is:.i)
+    = undefined
+  -- We are variable and need to go through all available bits.
+  addIndexDenseGo (cs:.c) (vs:.IStatic rb) (us:.u) (is:.i)
+    = flatten mk step . addIndexDenseGo cs vs us is
+    where mk svs = return (svs, ks)
+          step = undefined
+          {-# Inline [0] mk   #-}
+          {-# Inline [0] step #-}
+  {-# Inline addIndexDenseGo #-}
+
+{-
 -- | Introduce a singleton vertex into an empty set structure, where the
 -- set structure has explicitly annotaed first and last set vertices. This
 -- means that first and last point to the same element.
@@ -34,8 +48,6 @@ instance
 instance
   ( TstCtx m ts s x0 i0 is (BS2 First Last I)
   ) => TermStream m (TermSymbol ts (Singleton v)) s (is:.BS2 First Last I) where
-  termStream = undefined
-  {-
   -- If we are static, we need to check that we will flip the first bit.
   termStream (ts:|Singleton f) (cs:.IStatic d) (us:.BS2 ss ui uj) (is:.BS2 s i j)
     = map go . termStream ts cs us is . staticCheck (popCount s == 1 && d == 0)
@@ -43,10 +55,10 @@ instance
   termStream (ts:|Singleton f) (cs:.IVariable d) (us:.BS2 ss ui uj) (is:.BS2 s i j)
     = map go . termStream ts cs us is . staticCheck (popCount s == 1 && d == 0)
     where go (TState zz ii ee) = TState zz (ii:.:RiBs2I (BS2 s i j)) (ee:.f (getIter i))
-    -}
   {-# Inline termStream #-}
+-}
 
-instance TermStaticVar (Singleton v) (BS2 First Last I) where
+instance TermStaticVar (Edge e) (BS2 First Last I) where
   termStaticVar   _ (IStatic   d) _ = IStatic   $ d+1
   termStaticVar   _ (IVariable d) _ = IVariable $ d+1
   termStreamIndex _ _  ix = ix

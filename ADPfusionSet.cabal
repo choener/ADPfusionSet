@@ -64,9 +64,11 @@ library
     ADP.Fusion.Set
     -- Set
     ADP.Fusion.Core.Set
+    ADP.Fusion.Core.Set2
     ADP.Fusion.SynVar.Indices.Set0
     ADP.Fusion.Term.Chr.Set0
     ADP.Fusion.Term.Edge.Set
+    ADP.Fusion.Term.Edge.Set2
     ADP.Fusion.Term.Epsilon.Set
     ADP.Fusion.Term.Singleton.Set2
     ADP.Fusion.Term.Singleton.Type

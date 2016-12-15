@@ -19,11 +19,6 @@ import ADP.Fusion.Core.Multi
 
 
 
---type instance TblConstraint (BitSet t)  = TableConstraint
---type instance TblConstraint (BS2 i j t) = TableConstraint
-
-
-
 instance RuleContext (BitSet I) where
   type Context (BitSet I) = InsideContext Int
   initialContext _ = IStatic 0
@@ -44,33 +39,13 @@ instance RuleContext (BitSet C) where
   initialContext _ = Complemented
   {-# Inline initialContext #-}
 
+
+
 newtype instance RunningIndex (BitSet I) = RiBsI (BitSet I)
 
 data instance RunningIndex (BitSet O) = RiBsO !(BitSet O) !(BitSet O)
 
 data instance RunningIndex (BitSet C) = RiBsC !(BitSet C) !(BitSet C)
-
-
-instance RuleContext (BS2 First Last I) where
-  type Context (BS2 First Last I) = InsideContext Int
-  initialContext _ = IStatic 0
-  {-# Inline initialContext #-}
-
-instance RuleContext (BS2 First Last O) where
-  type Context (BS2 First Last O) = OutsideContext ()
-  initialContext _ = OStatic ()
-  {-# Inline initialContext #-}
-
-instance RuleContext (BS2 First Last C) where
-  type Context (BS2 First Last C) = ComplementContext
-  initialContext _ = Complemented
-  {-# Inline initialContext #-}
-
-newtype instance RunningIndex (BS2 First Last I) = RiBs2I (BS2 First Last I)
-
-data instance RunningIndex (BS2 First Last O) = RiBs2O !(BS2 First Last O) !(BS2 First Last O)
-
-data instance RunningIndex (BS2 First Last C) = RiBs2C !(BS2 First Last C) !(BS2 First Last C)
 
 
 
@@ -93,6 +68,8 @@ instance
   mkStream S (IVariable rb) u s
     = staticCheck (rb <= popCount s) . singleton . ElmS $ RiBsI 0
   {-# Inline mkStream #-}
+
+
 
 -- | Initial index construction for outside Bitsets. Bits set to @0@
 -- indicate hole-space. The last bitset, the one accessed by @axiom@, is
@@ -121,49 +98,13 @@ instance
 --    = staticCheck (popCount s + rp <= popCount u) . singleton $ ElmS s s
   {-# Inline mkStream #-}
 
+
+
 instance
   ( Monad m
   ) => MkStream m S (BitSet C) where
 
-instance
-  ( Monad m
-  ) => MkStream m S (BS2 First Last I) where
-  mkStream S (IStatic rp) u sij@(BS2 s (Iter i) _)
-    = staticCheck (popCount s == 0 && rp == 0) . singleton . ElmS . RiBs2I $ BS2 0 (Iter i) (Iter i)
-  mkStream S (IVariable rp) u sij@(BS2 s (Iter i) _)
-    = staticCheck (popCount s >= rp) . singleton . ElmS . RiBs2I $ BS2 0 (Iter i) (Iter i)
-  {-# Inline mkStream #-}
 
-instance
-  ( Monad m
-  ) => MkStream m S (BS2 First Last O) where
-  mkStream = error "Core.Set.hs :: MkStream S BS2 O"
-
-instance
-  ( Monad m
-  ) => MkStream m S (BS2 First Last C) where
-  mkStream = error "Core.Set.hs :: MkStream S BS2 C"
-
-
-
--- | An undefined bitset with 2 interfaces.
-
-undefbs2i :: BS2 f l t
-undefbs2i = BS2 (-1)  (-1) (-1)
-{-# Inline undefbs2i #-}
-
-undefi :: Interface i
-undefi = (-1)
-{-# Inline undefi #-}
-
-instance TableStaticVar (u O) c (BitSet O) where
-  tableStaticVar _ _ (OStatic  d) _ = OFirstLeft d
-  tableStaticVar _ _ (ORightOf d) _ = OFirstLeft d
-  tableStreamIndex _ c _ bs = bs
-  {-# INLINE [0] tableStaticVar   #-}
-  {-# INLINE [0] tableStreamIndex #-}
-
-instance TableStaticVar c (u I) (BitSet O) where
 
 instance (MinSize c) => TableStaticVar u c (BitSet I) where
   tableStaticVar _ c (IStatic   d) _ = IVariable $ d - minSize c -- TODO rly?
@@ -172,7 +113,19 @@ instance (MinSize c) => TableStaticVar u c (BitSet I) where
   {-# INLINE [0] tableStaticVar   #-}
   {-# INLINE [0] tableStreamIndex #-}
 
-instance TableStaticVar c u (BS2 i j I) where
+
+instance TableStaticVar (u O) c (BitSet O) where
+  tableStaticVar _ _ (OStatic  d) _ = OFirstLeft d
+  tableStaticVar _ _ (ORightOf d) _ = OFirstLeft d
+  tableStreamIndex _ c _ bs = bs
+  {-# INLINE [0] tableStaticVar   #-}
+  {-# INLINE [0] tableStreamIndex #-}
+
+
+
+instance TableStaticVar c (u I) (BitSet O) where
+
+
 
 -- | We sometimes need 
 
