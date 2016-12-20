@@ -3,7 +3,7 @@
 -- for the more right-most symbols, which request a number of reserved
 -- bits.
 
-module ADP.Fusion.Core.Set where
+module ADP.Fusion.Core.Set2 where
 
 import Data.Proxy
 import Data.Vector.Fusion.Stream.Monadic (singleton,filter,enumFromStepN,map,unfoldr)
@@ -19,9 +19,20 @@ import ADP.Fusion.Core.Multi
 
 
 
+data Set2Context
+  = Set2Fixed
+  -- ^ completely fixed set, for the right-most element.
+  | Set2First !Int
+  -- ^ only the @First@ element is fixed, @Last@ will move around, keeping
+  -- @Int@ bits free.
+  | Set2Var !Int
+  -- ^ only the @First@ element is fixed, @Last@ will move around. In
+  -- addition, at least @Int@ bits are free.
+  deriving (Eq)
+
 instance RuleContext (BS2 First Last I) where
-  type Context (BS2 First Last I) = InsideContext Int
-  initialContext _ = IStatic 0
+  type Context (BS2 First Last I) = InsideContext Set2Context
+  initialContext _ = IStatic Set2Fixed
   {-# Inline initialContext #-}
 
 instance RuleContext (BS2 First Last O) where
@@ -45,11 +56,14 @@ data instance RunningIndex (BS2 First Last C) = RiBs2C !(BS2 First Last C) !(BS2
 instance
   ( Monad m
   ) => MkStream m S (BS2 First Last I) where
-  mkStream S (IStatic rp) u sij@(BS2 s (Iter i) _)
-    = staticCheck (popCount s == 0 && rp == 0) . singleton . ElmS . RiBs2I $ BS2 0 (Iter i) (Iter i)
-  -- In this case, we take 
+--  mkStream S (IStatic rp) u sij@(BS2 s (Iter i) _)
+--    = staticCheck (popCount s == 0 && rp == 0) . singleton . ElmS . RiBs2I $ BS2 0 (Iter i) (Iter i)
+  -- In the variable case, no bits are set. In addition we set first and
+  -- last to @-1@ to denote that not anything has been set.
+  -- ------
+  -- No bits are set, but if @First@ is to be used, it should be @i@.
   mkStream S (IVariable rp) u sij@(BS2 s (Iter i) _)
-    = undefined -- staticCheck (popCount s >= rp) . singleton . ElmS . RiBs2I $ BS2 0 (Iter i) (Iter i)
+    = staticCheck (popCount s >= rp) . singleton . ElmS . RiBs2I $ BS2 0 (Iter i) (Iter i)
   {-# Inline mkStream #-}
 
 instance

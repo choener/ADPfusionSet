@@ -25,21 +25,6 @@ instance
     $ mkStream ls (termStaticVar (Edge f) sv is) us (termStreamIndex (Edge f) sv is)
   {-# Inline mkStream #-}
 
-instance
-  (
-  ) => AddIndexDense s (us:.BS2 First Last I) (cs:.c) (is:.BS2 First Last I) where
-  -- In the static case we should now have exactly one free bit.
-  addIndexDenseGo (cs:.c) (vs:.IStatic rb) (us:.u) (is:.i)
-    = undefined
-  -- We are variable and need to go through all available bits.
-  addIndexDenseGo (cs:.c) (vs:.IStatic rb) (us:.u) (is:.i)
-    = flatten mk step . addIndexDenseGo cs vs us is
-    where mk svs = return (svs, ks)
-          step = undefined
-          {-# Inline [0] mk   #-}
-          {-# Inline [0] step #-}
-  {-# Inline addIndexDenseGo #-}
-
 {-
 -- | Introduce a singleton vertex into an empty set structure, where the
 -- set structure has explicitly annotaed first and last set vertices. This
