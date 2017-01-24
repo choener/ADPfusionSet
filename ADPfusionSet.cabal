@@ -62,6 +62,7 @@ library
   exposed-modules:
     -- multi imports
     ADP.Fusion.Set
+    ADP.Fusion.Set2
     -- Set
     ADP.Fusion.Core.Set
     ADP.Fusion.Core.Set2
