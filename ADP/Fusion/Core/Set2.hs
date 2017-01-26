@@ -19,15 +19,35 @@ import ADP.Fusion.Core.Multi
 
 
 
+-- | When dealing with rules @X -> Y Z@, we need to annotate which of the
+-- @First@ and @Last@ nodes are allowed to move freely.
+--
+-- @X -> a@ fixes a single node as @Singleton@.
+--
+-- @X -> Y a@ with @Edge a@ sets @Last X == Last a@ and allows @Y@ to
+-- choose @Last Y@ freely. In addition, @Last Y == First a@.
+--
+-- @X -> a Y@ with @Edge a@ set @First X == First a@ and allows @a@ to
+-- choose @Last a@ freely. @Last a == First Y@.
+--
+-- @ X -> Y Z@
+--
+-- ... freely always means freely within the @interior X@ part.
+
 data Set2Context
   = Set2Fixed
-  -- ^ completely fixed set, for the right-most element.
-  | Set2First !Int
-  -- ^ only the @First@ element is fixed, @Last@ will move around, keeping
-  -- @Int@ bits free.
-  | Set2Var !Int
-  -- ^ only the @First@ element is fixed, @Last@ will move around. In
-  -- addition, at least @Int@ bits are free.
+  -- ^ completely fixed set, for the right-most element. Here, the l.h.s.
+  -- completely determines the first and last node. However, @First@ needs
+  -- to be taken from as the @Last Y@ element from @X -> Y Z@, as well as
+  -- calculating which free bits to take as @interior X \ interior Y + Last
+  -- Y@.
+  | Set2MoveLast !Int
+  -- ^ The @First@ element is fixed by the symbol immediately to the left,
+  -- the @Last@ element we can move freely. The @Int@ gives the number of
+  -- bits we have to keep free for elements more to the right.
+--  | Set2Var !Int
+--  -- ^ only the @First@ element is fixed, @Last@ will move around. In
+--  -- addition, at least @Int@ bits are free.
   deriving (Eq)
 
 instance RuleContext (BS2 First Last I) where
@@ -36,8 +56,8 @@ instance RuleContext (BS2 First Last I) where
   {-# Inline initialContext #-}
 
 instance RuleContext (BS2 First Last O) where
-  type Context (BS2 First Last O) = OutsideContext ()
-  initialContext _ = OStatic ()
+  type Context (BS2 First Last O) = OutsideContext Set2Context
+  initialContext _ = OStatic Set2Fixed
   {-# Inline initialContext #-}
 
 instance RuleContext (BS2 First Last C) where

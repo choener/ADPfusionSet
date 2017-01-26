@@ -33,7 +33,7 @@ flag examples
   manual:       True
 
 flag debug
-  description:  dump intermediate Core files
+  description:  Enable bounds checking and various other debug operations at the cost of a significant performance penalty.
   default:      False
   manual:       True
 
@@ -57,7 +57,7 @@ library
                , ADPfusion          == 0.5.2.*
                , DPutils            >= 0.0.0    &&  < 0.0.2
                , OrderedBits        == 0.0.1.*
-               , PrimitiveArray     == 0.7.2.*
+               , PrimitiveArray     == 0.8.0.*
 
   exposed-modules:
     -- multi imports
@@ -99,6 +99,8 @@ library
     Haskell2010
   ghc-options:
     -O2 -funbox-strict-fields
+  if flag(debug)
+    cpp-options: -DADPFUSION_CHECKS
 
 
 
