@@ -1,6 +1,9 @@
 
 -- | Singleton vertices are only introduced into a set structure, if no
 -- vertex has been placed yet.
+--
+-- We explicitly check that @X -> s@ is the only allowed rule, with @s ==
+-- Singleton@, apart from introducing "deletion" symbols like @X -> - s@.
 
 module ADP.Fusion.Term.Singleton.Set1 where
 

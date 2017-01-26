@@ -1,4 +1,17 @@
 
+-- | Insert an edge into a set. @X -> Y e@ with @e == Edge@ extends @Y@
+-- with the edge partially overlapping @Y@.
+--
+-- The semantic meaning of the overlap depends on what the @k@ type in @BS1
+-- k i@ is. For @First@, the edge will go from @First@ in @X@ to @First@ in
+-- the smaller @Y@.
+--
+-- TODO @X -> e X@ vs @X -> X e@.
+--
+-- Sidenote: can we actually have @X -> Y Z@ with @Set1@ structures?
+-- I don't think so, at least not easily, since the boundary between @Y Z@
+-- is unclear.
+
 module ADP.Fusion.Term.Edge.Set1 where
 
 import Data.Bits
@@ -48,6 +61,9 @@ instance
             let RiBs1I (BS1 cset (Boundary cto)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 First I))
                 avail = activeBitsL $ (i .&. complement cset) `clearBit` getBoundary b
             in  return $ (tstate,cset,cto,avail)
+          -- in @X -> Y e Z@, @e == Edge@ will only be active, if @Y@ has
+          -- at least one active bit. This means that @X -> e ...@ will
+          -- never be active.
           step (_,_,_,[]) = return $ Done
           step (TState s ii ee,cset,to,(from:xs)) =
             let ix = RiBs1I $ BS1 (cset `setBit` from) (Boundary from)
