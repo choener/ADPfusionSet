@@ -1,6 +1,7 @@
 
 module ADP.Fusion.SynVar.Indices.Set1 where
 
+import Control.Exception (assert)
 import Data.Proxy
 import Data.Vector.Fusion.Stream.Monadic (map,Stream,head,mapM,Step(..))
 import Data.Vector.Fusion.Util (delay_inline)
@@ -17,12 +18,33 @@ import ADP.Fusion.Core.Set1
 
 
 
+-- |
+--
+-- TODO After this case we should only allow @S@, since we write, in
+-- essence, left-linear grammars here.
+--
+-- TODO we should try to statically assure that @rb==0@ holds always in
+-- this case. It should because every other symbol moves to @IVariable@
+-- once the number of of reserved bits is @>0@.
+
 instance
-  ( IndexHdr s x0 i0 us (BS1 k I) cs c is (BS1 k I)
+  ( IndexHdr s x0 i0 us (BS1 First I) cs c is (BS1 First I)
   ) => AddIndexDense s (us:.BS1 k I) (cs:.c) (is:.BS1 k I) where
+  -- This rule should only be active if we have @X -> Y@ rules. Neither @X
+  -- -> Y Z@ nor @X -> e Y@ are possible in a left-linear grammar.
   addIndexDenseGo (cs:.c) (vs:.IStatic rb) (lbs:._) (ubs:._) (us:.BS1 uSet uBnd) (is:.BS1 set bnd)
-    = map undefined
+    = map (\(SvS s t y') ->
+        let RiBs1I (BS1 cset (Boundary to)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 First I))
+        in  assert (cset == 0 && to == (-1)) $ SvS s (t:.BS1 set bnd) (y' :.: RiBs1I (BS1 set bnd)))
     . addIndexDenseGo cs vs lbs ubs us is
+    . assert (rb==0)
+  -- Deal with @X -> Y e@ type rules.
+  addIndexDenseGo (cs:.c) (vs:.IVariable rb) (lbs:._) (ubs:._) (us:.BS1 uSet uBnd) (is:.BS1 set bnd)
+    = flatten mk step . addIndexDenseGo cs vs lbs ubs us is
+    where mk s = undefined
+          step = undefined
+          {-# Inline [0] mk   #-}
+          {-# Inline [0] step #-}
   {-# Inline addIndexDenseGo #-}
 
 {-

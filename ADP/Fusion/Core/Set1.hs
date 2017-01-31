@@ -41,6 +41,7 @@ instance
   ) => MkStream m S (BS1 i I) where
   -- In case of @X -> ε@ or @X -> Singleton@, we have a static case here
   -- and allow the rule to succeed.
+  -- TODO is this right? I don't think so
   mkStream S (IStatic z) u sk@(BS1 s (Boundary k))
     = let pc = popCount s
       in  staticCheck (pc <= 1 && pc == z) . singleton . ElmS . RiBs1I $ sk

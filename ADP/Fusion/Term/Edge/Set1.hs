@@ -65,9 +65,11 @@ instance
           -- at least one active bit. This means that @X -> e ...@ will
           -- never be active.
           step (_,_,_,[]) = return $ Done
-          step (TState s ii ee,cset,to,(from:xs)) =
-            let ix = RiBs1I $ BS1 (cset `setBit` from) (Boundary from)
-            in  return $ Yield (TState s (ii:.:ix) (ee:.f (From from) (To to))) (TState s ii ee,cset,to,xs)
+          step (TState s ii ee,cset,to,(from:xs))
+            | from < 0  = error "Edge/Set1: source boundary is '-1'. Move all terminals to the right of syntactic variables!"
+            | otherwise =
+              let ix = RiBs1I $ BS1 (cset `setBit` from) (Boundary from)
+              in  return $ Yield (TState s (ii:.:ix) (ee:.f (From from) (To to))) (TState s ii ee,cset,to,xs)
           {-# Inline [0] mk   #-}
           {-# Inline [0] step #-}
   {-# Inline termStream #-}
