@@ -11,6 +11,7 @@ import Data.Bits.Extras
 import Data.Bits
 
 import ADP.Fusion.Core
+import ADP.Fusion.Core.Unit
 import Data.Bits.Ordered
 import Data.PrimitiveArray hiding (map)
 
@@ -71,4 +72,21 @@ instance
           {-# Inline [0] step     #-}
           {-# Inline     initMask #-}
   {-# Inline addIndexDenseGo #-}
+
+-- | A @Unit@ index expands to the full set with all possible boundaries
+-- tried in order.
+
+instance
+  ( IndexHdr s x0 i0 us (BS1 k I) cs c is (Unit I)
+  ) => AddIndexDense s (us:.BS1 k I) (cs:.c) (is:.Unit I) where
+  addIndexDenseGo (cs:.c) (vs:.IStatic ()) (lbs:._) (ubs:.BS1 fullSet _) (us:._) (is:._) -- unit has only one index value
+    = flatten mk step . addIndexDenseGo cs vs lbs ubs us is
+    where mk (SvS s t y') = return $ (SvS s t y', fullSet)
+          -- no more active bits
+          step (_, 0) = return Done
+          step (SvS s t y', bits)
+            | b <- lsb bits = return $ Yield (SvS s (t:.BS1 undefined undefined) (y':.:RiU))
+                                             (SvS s t y', bits `clearBit` b)
+          {-# Inline [0] mk   #-}
+          {-# Inline [0] step #-}
 
