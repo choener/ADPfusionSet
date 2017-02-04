@@ -14,24 +14,24 @@ import ADP.Fusion.Core.Multi
 
 -- | A singleton vertex is successfully parsed only if no other vertex is
 -- active yet. In particular, this allows us to insert "starting" points
--- into graphs that mostly deal with edges.
+-- into graphs that mostly deal with edges. As a parsing symbol, it
+-- provides an @Int@ which is the node index.
 
-data Singleton v where
-  Singleton :: (Int -> v) -> Singleton v
+data Singleton = Singleton
 
-instance Build (Singleton v)
+instance Build Singleton
 
 instance
   ( Element ls i
-  ) => Element (ls :!: Singleton v) i where
-    data Elm (ls :!: Singleton v) i = ElmSingleton !v !(RunningIndex i) (Elm ls i)
-    type Arg (ls :!: Singleton v)   = Arg ls :. v
+  ) => Element (ls :!: Singleton) i where
+    data Elm (ls :!: Singleton) i = ElmSingleton !Int !(RunningIndex i) (Elm ls i)
+    type Arg (ls :!: Singleton)   = Arg ls :. Int
     getArg (ElmSingleton v _ ls) = getArg ls :. v
     getIdx (ElmSingleton _ i _ ) = i
     {-# Inline getArg #-}
     {-# Inline getIdx #-}
 
-deriving instance (Show i, Show (RunningIndex i), Show v, Show (Elm ls i)) => Show (Elm (ls :!: Singleton v) i)
+deriving instance (Show i, Show (RunningIndex i), Show (Elm ls i)) => Show (Elm (ls :!: Singleton) i)
 
-type instance TermArg (Singleton v) = v
+type instance TermArg Singleton = Int
 

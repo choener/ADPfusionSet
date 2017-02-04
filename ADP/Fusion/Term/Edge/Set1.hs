@@ -30,12 +30,12 @@ import ADP.Fusion.Term.Edge.Type
 
 
 instance
-  ( TmkCtx1 m ls (Edge e) (BS1 k t)
-  ) => MkStream m (ls :!: Edge e) (BS1 k t) where
-  mkStream (ls :!: Edge f) sv us is
+  ( TmkCtx1 m ls Edge (BS1 k t)
+  ) => MkStream m (ls :!: Edge) (BS1 k t) where
+  mkStream (ls :!: Edge) sv us is
     = map (\(ss,ee,ii) -> ElmEdge ee ii ss)
-    . addTermStream1 (Edge f) sv us is
-    $ mkStream ls (termStaticVar (Edge f) sv is) us (termStreamIndex (Edge f) sv is)
+    . addTermStream1 Edge sv us is
+    $ mkStream ls (termStaticVar Edge sv is) us (termStreamIndex Edge sv is)
   {-# Inline mkStream #-}
 
 -- | We need to separate out the two cases of having @BS1 First@ and @BS1
@@ -45,17 +45,17 @@ instance
 
 instance
   ( TstCtx m ts s x0 i0 is (BS1 k I)
-  ) => TermStream m (TermSymbol ts (Edge v)) s (is:.BS1 k I) where
+  ) => TermStream m (TermSymbol ts Edge) s (is:.BS1 k I) where
   -- Begin the edge on @First == b@, and end it somewhere in the set.
-  termStream (ts:|edge) (cs:.IStatic r) (us:.u) (is:.BS1 i (Boundary newNode))
+  termStream (ts:|Edge) (cs:.IStatic r) (us:.u) (is:.BS1 i (Boundary newNode))
     = map (\(TState s ii ee) ->
         let RiBs1I (BS1 cset (Boundary setNode)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k I))
         in  TState s (ii:.:RiBs1I (BS1 i (Boundary newNode)))
-                     (ee:.edgeFromTo (Proxy :: Proxy First) edge (SetNode setNode) (NewNode newNode)) )
+                     (ee:.edgeFromTo (Proxy :: Proxy First) (SetNode setNode) (NewNode newNode)) )
     . termStream ts cs us is
   -- Begin the edge somewhere, because in the variable case we do not end
   -- on @b@
-  termStream (ts:|edge) (cs:.IVariable r) (us:.u) (is:.BS1 i b)
+  termStream (ts:|Edge) (cs:.IVariable r) (us:.u) (is:.BS1 i b)
     = flatten mk step . termStream ts cs us is
           -- get us the inner set, build an edge @avail -> to@
     where mk tstate@(TState s ii ee) =
@@ -70,7 +70,7 @@ instance
             | setNode < 0  = error "Edge/Set1: source boundary is '-1'. Move all terminals to the right of syntactic variables!"
             | otherwise =
               let ix = RiBs1I $ BS1 (cset `setBit` newNode) (Boundary newNode)
-              in  return $ Yield (TState s (ii:.:ix) (ee:.edgeFromTo (Proxy :: Proxy First) edge (SetNode setNode) (NewNode newNode)))
+              in  return $ Yield (TState s (ii:.:ix) (ee:.edgeFromTo (Proxy :: Proxy First) (SetNode setNode) (NewNode newNode)))
                                  (TState s ii ee,cset,setNode,xs)
           {-# Inline [0] mk   #-}
           {-# Inline [0] step #-}
@@ -81,7 +81,7 @@ instance
 -- TODO move to definition of 'Edge'
 
 class EdgeFromTo k where
-  edgeFromTo :: forall e . Proxy k -> Edge e -> SetNode -> NewNode -> e
+  edgeFromTo :: Proxy k -> SetNode -> NewNode -> (From:.To)
 
 newtype SetNode = SetNode Int
 
@@ -92,17 +92,17 @@ newtype NewNode = NewNode Int
 -- From@.
 
 instance EdgeFromTo First where
-  edgeFromTo Proxy (Edge f) (SetNode to) (NewNode from) = f (From from) (To to)
+  edgeFromTo Proxy (SetNode to) (NewNode from) = From from :. To to
   {-# Inline edgeFromTo #-}
 
 -- | And if the set has a @Last@ boundary, then we point from somewhere in
 -- the set @To@ the @NewNode@, which is @Last@.
 
 instance EdgeFromTo Last where
-  edgeFromTo Proxy (Edge f) (SetNode from) (NewNode to) = f (From from) (To to)
+  edgeFromTo Proxy (SetNode from) (NewNode to) = From from :. To to
   {-# Inline edgeFromTo #-}
 
-instance TermStaticVar (Edge e) (BS1 k I) where
+instance TermStaticVar Edge (BS1 k I) where
   termStaticVar   _ (IStatic   d) _ = IVariable $ d+1
   termStaticVar   _ (IVariable d) _ = IVariable $ d+1
   termStreamIndex _ _  ix = ix
