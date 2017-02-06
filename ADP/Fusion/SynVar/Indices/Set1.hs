@@ -49,6 +49,35 @@ instance
           -- @rb>0@. The boundary bit is one of those reserved and
           -- constitutes a mask to be used further down.
     where mk (SvS s t y') =
+            let
+            in  {- traceShow (set,bnd,rb) $ -} return (SvS s t y', set `clearBit` getBoundary bnd)
+          step (_, 0) = return Done
+          step (SvS s t y', bits) =
+            let nbnd = lsbZ bits
+                nset = set `clearBit` getBoundary bnd
+                bs1  = BS1 nset (Boundary nbnd)
+            in  -- traceShow (Boundary nbnd == bnd,bs1) $
+                return $ Yield (SvS s (t:.bs1) (y':.:RiBs1I bs1))
+                               (SvS s t y', bits `clearBit` nbnd)
+          {-
+            let numBits = popCount set - rb
+                initSet = 2 ^ numBits - 1
+                initBnd = Boundary $ lsbZ initSet
+                -- TODO works only if no prior bits set... (should be the
+                -- case here ...)
+            in  traceShow (set,bnd,rb,initSet,initBnd) $ return (SvS s t y', Just $ BS1 initSet initBnd)
+          step (_, Nothing) = return Done
+          step (_, Just (BS1 nset nbnd))
+            | popCount nset > popCount set - rb = return Done
+          step (SvS s t y', Just (curSet@(BS1 nset nbnd))) =
+            let realBS = applyMask maskSet $ curSet
+            in  traceShow (nbnd == bnd,BS1 nset nbnd) $
+                return $ Yield (SvS s (t:.realBS) (y':.:RiBs1I realBS))
+                               (SvS s t y', setSucc (BS1 0 (-1)) (BS1 fullSet (-1)) (BS1 nset nbnd))
+          fullSet = 2 ^ popCount set - 1
+          maskSet = set `clearBit` getBoundary bnd
+          -}
+          {-
             let RiBs1I (BS1 cset (Boundary to)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k I))
                 numBits = popCount cset
                 stopAt  = numBits - rb + 1
@@ -58,19 +87,26 @@ instance
                 initSet  = popShiftL initMask $ 2 ^ (popCount set - rb - numBits) - 1
                 initBnd  = Boundary $ lsbZ initSet
             in  assert (numBits == 0 && to == (-1) && rb > 0)
-                $ return (SvS s t y', if rb > popCount set then Nothing else Just $ BS1 initSet initBnd)
+                $ traceShow (set,bnd,rb,BS1 initSet initBnd) $ return (SvS s t y', if rb > popCount set then Nothing else Just $ BS1 initSet initBnd)
           step (_, Nothing)
             = return Done
+          -- TODO @setSucc@ needs to be refined to only produce valid next
+          -- sets. 
+          step (SvS s t y', Just (BS1 nset nbnd))
+            | nbnd == bnd = return $ Skip ( SvS s t y', setSucc (BS1 0 (-1)) (BS1 initMask initBnd) (BS1 nset nbnd))
           step (SvS s t y', Just (BS1 nset nbnd)) =
             -- No need to provide @nset .|. getIndex s@ because no bit is
             -- set in @getIndex s@.
-            return $ Yield (SvS s (t:.BS1 nset nbnd) (y':.:RiBs1I (BS1 nset nbnd)))
+            traceShow (nbnd == bnd,BS1 nset nbnd) $ return $ Yield (SvS s (t:.BS1 nset nbnd) (y':.:RiBs1I (BS1 nset nbnd)))
+                            -- TODO @setSucc@ doesn't handle the mask
+                            -- correctly
                            ( SvS s t y', setSucc (BS1 0 (-1)) (BS1 initMask initBnd) (BS1 nset nbnd))
-          initMask = set `clearBit` getBoundary bnd
+          initMask = set `clearBit` getBoundary bnd -- one less bit than @set@ has
           initBnd  = Boundary $ lsbZ initMask
+          -}
           {-# Inline [0] mk       #-}
           {-# Inline [0] step     #-}
-          {-# Inline     initMask #-}
+--          {-# Inline     initMask #-}
   {-# Inline addIndexDenseGo #-}
 
 -- | A @Unit@ index expands to the full set with all possible boundaries
@@ -85,7 +121,7 @@ instance
           -- no more active bits
           step (_, 0) = return Done
           step (SvS s t y', bits)
-            | b <- lsb bits = return $ Yield (SvS s (t:.BS1 undefined undefined) (y':.:RiU))
+            | b <- lsb bits = return $ Yield (SvS s (t:.BS1 fullSet (Boundary b)) (y':.:RiU))
                                              (SvS s t y', bits `clearBit` b)
           {-# Inline [0] mk   #-}
           {-# Inline [0] step #-}

@@ -45,13 +45,14 @@ instance
 
 instance
   ( TstCtx m ts s x0 i0 is (BS1 k I)
+  , EdgeFromTo k
   ) => TermStream m (TermSymbol ts Edge) s (is:.BS1 k I) where
   -- Begin the edge on @First == b@, and end it somewhere in the set.
   termStream (ts:|Edge) (cs:.IStatic r) (us:.u) (is:.BS1 i (Boundary newNode))
     = map (\(TState s ii ee) ->
         let RiBs1I (BS1 cset (Boundary setNode)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k I))
         in  TState s (ii:.:RiBs1I (BS1 i (Boundary newNode)))
-                     (ee:.edgeFromTo (Proxy :: Proxy First) (SetNode setNode) (NewNode newNode)) )
+                     (ee:.edgeFromTo (Proxy :: Proxy k) (SetNode setNode) (NewNode newNode)) )
     . termStream ts cs us is
   -- Begin the edge somewhere, because in the variable case we do not end
   -- on @b@
@@ -70,7 +71,7 @@ instance
             | setNode < 0  = error "Edge/Set1: source boundary is '-1'. Move all terminals to the right of syntactic variables!"
             | otherwise =
               let ix = RiBs1I $ BS1 (cset `setBit` newNode) (Boundary newNode)
-              in  return $ Yield (TState s (ii:.:ix) (ee:.edgeFromTo (Proxy :: Proxy First) (SetNode setNode) (NewNode newNode)))
+              in  return $ Yield (TState s (ii:.:ix) (ee:.edgeFromTo (Proxy :: Proxy k) (SetNode setNode) (NewNode newNode)))
                                  (TState s ii ee,cset,setNode,xs)
           {-# Inline [0] mk   #-}
           {-# Inline [0] step #-}
