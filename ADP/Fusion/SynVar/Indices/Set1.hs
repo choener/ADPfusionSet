@@ -125,4 +125,16 @@ instance
                                              (SvS s t y', bits `clearBit` b)
           {-# Inline [0] mk   #-}
           {-# Inline [0] step #-}
+  {-# Inline addIndexDenseGo #-}
+
+-- | A single @Boundary@ index allows us to get the optimal results ending
+-- on each individual boundary.
+
+instance
+  ( IndexHdr s x0 i0 us (BS1 k I) cs c is (Boundary I)
+  ) => AddIndexDense s (us:.BS1 k I) (cs:.c) (is:.Boundary I) where
+  addIndexDenseGo (cs:.c) (vs:.IStatic ()) (lbs:._) (ubs:.BS1 fullSet _) (us:._) (is:.Boundary i)
+    = map (\(SvS s t y') -> undefined)
+    . addIndexDenseGo cs vs lbs ubs us is
+  {-# Inline addIndexDenseGo #-}
 
