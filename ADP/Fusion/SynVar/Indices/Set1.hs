@@ -16,6 +16,7 @@ import Data.Bits.Ordered
 import Data.PrimitiveArray hiding (map)
 
 import ADP.Fusion.Core.Set1
+import ADP.Fusion.Core.Boundary
 
 
 
@@ -131,10 +132,10 @@ instance
 -- on each individual boundary.
 
 instance
-  ( IndexHdr s x0 i0 us (BS1 k I) cs c is (Boundary I)
-  ) => AddIndexDense s (us:.BS1 k I) (cs:.c) (is:.Boundary I) where
-  addIndexDenseGo (cs:.c) (vs:.IStatic ()) (lbs:._) (ubs:.BS1 fullSet _) (us:._) (is:.Boundary i)
-    = map (\(SvS s t y') -> undefined)
+  ( IndexHdr s x0 i0 us (BS1 k I) cs c is (Boundary k I)
+  ) => AddIndexDense s (us:.BS1 k I) (cs:.c) (is:.Boundary k I) where
+  addIndexDenseGo (cs:.c) (vs:.IStatic ()) (lbs:._) (ubs:.BS1 fullSet _) (us:._) (is:.i)
+    = map (\(SvS s t y') -> SvS s (t:.BS1 fullSet i) (y':.:RiBI i))
     . addIndexDenseGo cs vs lbs ubs us is
   {-# Inline addIndexDenseGo #-}
 
