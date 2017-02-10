@@ -139,3 +139,11 @@ instance
     . addIndexDenseGo cs vs lbs ubs us is
   {-# Inline addIndexDenseGo #-}
 
+instance
+  ( IndexHdr s x0 i0 us (BS1 Last I) cs c is (Boundary First I :> Boundary Last I)
+  ) => AddIndexDense s (us:.BS1 Last I) (cs:.c) (is:.(Boundary First I :> Boundary Last I))
+  addIndexDenseGo (cs:.c) (vs:.IStatic k) (lbs:._) (ubs:.BS1 fullSet _) (us:._) (is:.i)
+    = map undefined
+    . addIndexDenseGo cs vs lbs ubs us is
+  {-# Inline addIndexDenseGo #-}
+
