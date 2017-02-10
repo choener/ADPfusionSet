@@ -15,8 +15,9 @@ import ADP.Fusion.Core.Unit
 import Data.Bits.Ordered
 import Data.PrimitiveArray hiding (map)
 
-import ADP.Fusion.Core.Set1
 import ADP.Fusion.Core.Boundary
+import ADP.Fusion.Core.EdgeBoundary
+import ADP.Fusion.Core.Set1
 
 
 
@@ -139,11 +140,50 @@ instance
     . addIndexDenseGo cs vs lbs ubs us is
   {-# Inline addIndexDenseGo #-}
 
+-- | Given indices that index _only_ the current edge @First -> Last@, we
+-- want to go over all possible set combinations.
+--
+-- The @to@ element from an edge boundary will serve as the @First@ element
+-- in a rule
+-- @X -> Last (from :-> to) First
+
 instance
-  ( IndexHdr s x0 i0 us (BS1 Last I) cs c is (Boundary First I :> Boundary Last I)
-  ) => AddIndexDense s (us:.BS1 Last I) (cs:.c) (is:.(Boundary First I :> Boundary Last I))
-  addIndexDenseGo (cs:.c) (vs:.IStatic k) (lbs:._) (ubs:.BS1 fullSet _) (us:._) (is:.i)
-    = map undefined
+  ( IndexHdr s x0 i0 us (BS1 First I) cs c is (EdgeBoundary I)
+  ) => AddIndexDense s (us:.BS1 First I) (cs:.c) (is:.EdgeBoundary I) where
+  addIndexDenseGo (cs:.c) (vs:.IStatic k) (lbs:._) (ubs:.BS1 (BitSet fullSet) _) (us:._) (is:.(from :-> to))
+    = map (\(SvS s t y') ->
+        let RiEBI usedBits (_ :-> _) = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary I))
+            hereBits = fullSet .&. complement usedBits
+        in  SvS s (t:.BS1 (BitSet hereBits) (Boundary to)) (y':.:RiEBI fullSet (from :-> to)))
     . addIndexDenseGo cs vs lbs ubs us is
+  {-# Inline addIndexDenseGo #-}
+
+-- | Generate all possible bitsets until 'fullSet' is reached. @from@ is
+-- our @Last@, and @to@ may not be set.
+
+instance
+  ( IndexHdr s x0 i0 us (BS1 Last I) cs c is (EdgeBoundary I)
+  ) => AddIndexDense s (us:.BS1 Last I) (cs:.c) (is:.EdgeBoundary I) where
+  addIndexDenseGo (cs:.c) (vs:.IVariable rb) (lbs:._) (ubs:.BS1 (BitSet fullSet) _) (us:._) (is:.(from :-> to))
+    = flatten mk step . addIndexDenseGo cs vs lbs ubs us is
+    where mk (SvS s t y') =
+            let RiEBI usedBits (_ :-> _) = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary I))
+            in  assert (usedBits == 0) . return $ (SvS s t y', Just $ BitSet zeroBits)
+          step (_, Nothing) = return $ Done
+          step (SvS s t y', Just cbits)
+            | popCount cbits > maxCount = return $ Done
+            | otherwise =
+                let cset = BitSet . setBit from . popShiftL (clearBit from . clearBit to $ fullSet) $ getBitSet cbits
+                in  return $ Yield (SvS s (t:.BS1 cset (Boundary from)) (y':.:RiEBI (getBitSet cbits) (from :-> to)))
+                                   (SvS s t y', setSucc (BitSet zeroBits) (BitSet $ 2^maxCount) cbits)
+          !maxCount = popCount fullSet - rb - 1 -- remove one for @from@, the @to@ bit should be in @rb@
+          {-# Inline [0] mk   #-}
+          {-# Inline [0] step #-}
+    {-
+    = map (\(SvS s t y') ->
+        let RiEBI usedBits (_ :-> _) = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary I))
+            hereBits = fullSet .&. complement usedBits
+        in  SvS s (t:.BS1 (BitSet hereBits) (Boundary to)) (y':.:RiEBI fullSet (from :-> to)))
+        -}
   {-# Inline addIndexDenseGo #-}
 
