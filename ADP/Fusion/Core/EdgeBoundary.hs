@@ -12,12 +12,6 @@ import ADP.Fusion.Core.Multi
 
 
 
--- |
---
--- TODO Combine with Term.Edge.Type?
-
-data EdgeBoundary k = !Int :-> !Int
-
 instance RuleContext (EdgeBoundary I) where
   type Context (EdgeBoundary I) = InsideContext Int
   initialContext _ = IStatic 0

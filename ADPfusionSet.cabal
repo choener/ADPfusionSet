@@ -63,17 +63,20 @@ library
     -- multi imports
 --    ADP.Fusion.Set
     ADP.Fusion.Boundary
+    ADP.Fusion.EdgeBoundary
     ADP.Fusion.Set1
 --    ADP.Fusion.Set2
     -- Set
 --    ADP.Fusion.Core.Set
     ADP.Fusion.Core.Boundary
+    ADP.Fusion.Core.EdgeBoundary
     ADP.Fusion.Core.Set1
 --    ADP.Fusion.Core.Set2
 --    ADP.Fusion.SynVar.Indices.Set0
     ADP.Fusion.SynVar.Indices.Set1
 --    ADP.Fusion.Term.Chr.Set0
 --    ADP.Fusion.Term.Edge.Set
+    ADP.Fusion.Term.Edge.EdgeBoundary
     ADP.Fusion.Term.Edge.Set1
 --    ADP.Fusion.Term.Edge.Set2
 --    ADP.Fusion.Term.Epsilon.Set
