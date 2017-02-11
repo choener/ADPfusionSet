@@ -4,6 +4,7 @@
 module ADP.Fusion.Core.EdgeBoundary where
 
 import Data.Vector.Fusion.Stream.Monadic (singleton)
+import Data.Bits (zeroBits)
 
 import Data.PrimitiveArray hiding (map)
 
@@ -17,13 +18,13 @@ instance RuleContext (EdgeBoundary I) where
   initialContext _ = IStatic 0
   {-# Inline initialContext #-}
 
-data instance RunningIndex (EdgeBoundary I) = RiEBI !Int !(EdgeBoundary I)
+data instance RunningIndex (EdgeBoundary I) = RiEBI !(BitSet I) !(EdgeBoundary I)
 
 instance
   ( Monad m
   ) => MkStream m S (EdgeBoundary I) where
   mkStream S _ u k
-    = singleton . ElmS $ RiEBI 0 k
+    = singleton . ElmS $ RiEBI zeroBits k
   {-# Inline mkStream #-}
 
 instance TableStaticVar u c (EdgeBoundary I) where

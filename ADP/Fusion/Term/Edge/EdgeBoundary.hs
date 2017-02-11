@@ -33,7 +33,7 @@ instance
   termStream (ts:|Edge) (cs:._) (us:.u) (is:.(from :-> to))
     = map (\(TState s ii ee) ->
         let RiEBI cset _ = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary I))
-        in  TState s (ii:.:RiEBI (setBit to cset) (from :-> to))
+        in  TState s (ii:.:RiEBI (cset `setBit` to) (from :-> to))
                      (ee:.(From from:.To to)) )
     . termStream ts cs us is
     . staticCheck (from /= to)
