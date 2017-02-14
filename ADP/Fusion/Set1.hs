@@ -9,6 +9,7 @@ module ADP.Fusion.Set1
   , module ADP.Fusion.Core.Set1
   , module ADP.Fusion.SynVar.Indices.Set1
   , module ADP.Fusion.Term.Edge.Set1
+  , module ADP.Fusion.Term.EdgeWithSet
   , module ADP.Fusion.Term.Epsilon.Set1
   , module ADP.Fusion.Term.Singleton.Set1
   , module ADP.Fusion.Term.Singleton.Type
@@ -17,6 +18,7 @@ module ADP.Fusion.Set1
 import ADP.Fusion.Core.Set1
 import ADP.Fusion.SynVar.Indices.Set1
 import ADP.Fusion.Term.Edge.Set1
+import ADP.Fusion.Term.EdgeWithSet
 import ADP.Fusion.Term.Epsilon.Set1
 import ADP.Fusion.Term.Singleton.Set1
 import ADP.Fusion.Term.Singleton.Type
