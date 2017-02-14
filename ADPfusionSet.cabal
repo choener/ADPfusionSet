@@ -78,6 +78,9 @@ library
 --    ADP.Fusion.Term.Edge.Set
     ADP.Fusion.Term.Edge.EdgeBoundary
     ADP.Fusion.Term.Edge.Set1
+    ADP.Fusion.Term.EdgeWithSet
+    ADP.Fusion.Term.EdgeWithSet.Set1
+    ADP.Fusion.Term.EdgeWithSet.Type
 --    ADP.Fusion.Term.Edge.Set2
 --    ADP.Fusion.Term.Epsilon.Set
     ADP.Fusion.Term.Epsilon.Set1
