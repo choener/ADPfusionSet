@@ -6,6 +6,7 @@ import Data.Strict.Tuple
 import Data.Vector.Fusion.Stream.Monadic hiding (flatten)
 import Debug.Trace
 import Prelude hiding (map)
+import Control.Exception (assert)
 
 import ADP.Fusion.Core
 import Data.Bits.Ordered
@@ -68,9 +69,38 @@ instance
           {-# Inline [0] step #-}
   {-# Inline termStream #-}
 
+-- TODO 17.2.2017 added
+
+instance
+  ( TstCtx m ts s x0 i0 is (BS1 k O)
+  , EdgeFromTo k
+  ) => TermStream m (TermSymbol ts EdgeWithSet) s (is:.BS1 k O) where
+  termStream (ts:|EdgeWithSet) (cs:.OStatic r) (us:.u) (is:.BS1 gset (Boundary gbnd))
+    = map (\(TState s ii ee) ->
+        let RiBs1O (BS1 cset (Boundary cbnd)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k O))
+            (ef:.et) = edgeFromTo (Proxy :: Proxy k) (SetNode cbnd) (NewNode gbnd)
+        in  TState s (ii:.:RiBs1O (BS1 gset (Boundary gbnd)))
+                     (ee:.(getBitSet cset:.ef:.et) ) )
+    . termStream ts cs us is
+    -- TODO needs to be better!
+    . assert (r==0)
+
+instance
+  ( TstCtx m ts s x0 i0 is (BS1 k C)
+  , EdgeFromTo k
+  ) => TermStream m (TermSymbol ts EdgeWithSet) s (is:.BS1 k C) where
+
+
 instance TermStaticVar EdgeWithSet (BS1 k I) where
   termStaticVar   _ (IStatic   d) _ = IVariable $ d+1
   termStaticVar   _ (IVariable d) _ = IVariable $ d+1
+  termStreamIndex _ _  ix = ix
+  {-# Inline [0] termStaticVar #-}
+  {-# Inline [0] termStreamIndex #-}
+
+instance TermStaticVar EdgeWithSet (BS1 k O) where
+  termStaticVar _ (OStatic  d) _ = ORightOf   $ d+1
+  termStaticVar _ (ORightOf d) _ = OFirstLeft $ d+1
   termStreamIndex _ _  ix = ix
   {-# Inline [0] termStaticVar #-}
   {-# Inline [0] termStreamIndex #-}

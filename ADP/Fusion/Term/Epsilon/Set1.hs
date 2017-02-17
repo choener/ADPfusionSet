@@ -33,19 +33,23 @@ instance
     . staticCheck (i==0)
   {-# Inline termStream #-}
 
-{-
 instance
-  ( TstCtx m ts s x0 i0 is (BS1 i O)
-  ) => TermStream m (TermSymbol ts Epsilon) s (is:.BitSet O) where
-  termStream (ts:|Epsilon) (cs:.OStatic r) (us:.u) (is:.i)
+  ( TstCtx m ts s x0 i0 is (BS1 k O)
+  ) => TermStream m (TermSymbol ts Epsilon) s (is:.BS1 k O) where
+  termStream (ts:|Epsilon) (cs:.OStatic r) (us:.BS1 uset ubnd) (is:.BS1 cset cbnd)
     = map (\(TState s ii ee) ->
-              TState s (ii:.:RiBsO u u) (ee:.()) )
+              TState s (ii:.:RiBs1O (BS1 cset cbnd)) (ee:.()) )
     . termStream ts cs us is
-    . staticCheck (i==u)
+    . staticCheck (uset == cset)
   {-# Inline termStream #-}
--}
 
 instance TermStaticVar Epsilon (BS1 k I) where
+  termStaticVar _ sv _ = sv
+  termStreamIndex _ _ b = b
+  {-# Inline [0] termStaticVar #-}
+  {-# Inline [0] termStreamIndex #-}
+
+instance TermStaticVar Epsilon (BS1 k O) where
   termStaticVar _ sv _ = sv
   termStreamIndex _ _ b = b
   {-# Inline [0] termStaticVar #-}

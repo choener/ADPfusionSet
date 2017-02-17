@@ -41,9 +41,31 @@ instance
     . staticCheck (popCount i == 1)
   {-# Inline termStream #-}
 
+-- |
+--
+-- TODO 17.2.2017 added; probably wrong together with the syntactic
+-- variable instance in subtle ways.
+
+instance
+  ( TstCtx m ts s x0 i0 is (BS1 k O)
+  ) => TermStream m (TermSymbol ts Singleton) s (is:.BS1 k O) where
+  termStream (ts:|Singleton) (cs:.OStatic r) (us:.BS1 uset ubnd) (is:.BS1 cset cbnd)
+    = map (\(TState s ii ee) -> TState s (ii:.:RiBs1O (BS1 cset cbnd)) (ee:.getBoundary cbnd) )
+    . termStream ts cs us is
+    . staticCheck (popCount uset - 1 == popCount cset)
+    -- TODO remove after thought out!
+    . staticCheck False
+  {-# Inline termStream #-}
+
 instance TermStaticVar Singleton (BS1 k I) where
   termStaticVar   _ (IStatic   d) _ = IStatic   $ d+1
   termStaticVar   _ (IVariable d) _ = IVariable $ d+1
+  termStreamIndex _ _  ix = ix
+  {-# Inline [0] termStaticVar #-}
+  {-# Inline [0] termStreamIndex #-}
+
+instance TermStaticVar Singleton (BS1 k O) where
+  termStaticVar _ (OStatic d) _ = ORightOf $ d+1
   termStreamIndex _ _  ix = ix
   {-# Inline [0] termStaticVar #-}
   {-# Inline [0] termStreamIndex #-}

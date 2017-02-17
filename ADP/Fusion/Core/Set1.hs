@@ -20,21 +20,21 @@ import ADP.Fusion.Core.Multi
 
 
 
-{-
-data Set1Context
-  = Set1Fixed
-  -- ^ For the right, static elements in a production rule.
-  | Set1Var !Int
-  -- ^ TODO write me
-  deriving (Eq,Show)
--}
-
 instance RuleContext (BS1 i I) where
   type Context (BS1 i I) = InsideContext Int
   initialContext _ = IStatic 0
   {-# Inline initialContext #-}
 
+instance RuleContext (BS1 i O) where
+  type Context (BS1 i O) = OutsideContext Int
+  initialContext _ = OStatic 0
+  {-# Inline initialContext #-}
+
 newtype instance RunningIndex (BS1 i I) = RiBs1I (BS1 i I)
+
+-- Only allow linear languages for now!
+
+newtype instance RunningIndex (BS1 i O) = RiBs1O (BS1 i O)
 
 instance
   ( Monad m
@@ -50,9 +50,28 @@ instance
     = staticCheck (popCount s >= rp) . singleton . ElmS . RiBs1I $ BS1 0 (Boundary $ -1)
   {-# Inline mkStream #-}
 
+instance
+  ( Monad m
+  ) => MkStream m S (BS1 i O) where
+  mkStream S (OStatic z) (BS1 uset (Boundary ubnd)) (BS1 cset (Boundary cbnd))
+    = let pcc = popCount cset
+          pcu = popCount uset
+      in  staticCheck (pcu - pcc <= z && z <= 1) . singleton . ElmS . RiBs1O $ BS1 cset (Boundary cbnd)
+  mkStream S (OFirstLeft z) (BS1 uset (Boundary ubnd)) (BS1 cset (Boundary cbnd))
+    = let ------------V--- TODO ???
+      in  staticCheck True . singleton . ElmS . RiBs1O $ BS1 uset (Boundary $ -1)
+  {-# Inline mkStream #-}
+
 instance (MinSize c) => TableStaticVar u c (BS1 s I) where
   tableStaticVar _ c (IStatic   k) _ = IVariable $ k + minSize c
   tableStaticVar _ c (IVariable k) _ = IVariable $ k + minSize c
+  tableStreamIndex _ c _ z = z
+  {-# Inline tableStaticVar #-}
+  {-# Inline tableStreamIndex #-}
+
+instance (MinSize c) => TableStaticVar u c (BS1 s O) where
+  tableStaticVar   _ _ (OStatic  d) _ = OFirstLeft d
+  tableStaticVar   _ _ (ORightOf d) _ = OFirstLeft d
   tableStreamIndex _ c _ z = z
   {-# Inline tableStaticVar #-}
   {-# Inline tableStreamIndex #-}

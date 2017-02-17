@@ -39,6 +39,19 @@ instance
     . staticCheck (from /= to)
   {-# Inline termStream #-}
 
+-- TODO 17.2.2017 added
+
+instance
+  ( TstCtx m ts s x0 i0 is (EdgeBoundary C)
+  ) => TermStream m (TermSymbol ts EdgeWithSet) s (is:.EdgeBoundary C) where
+  termStream (ts:|EdgeWithSet) (cs:._) (us:.u) (is:.(from :-> to))
+    = map (\(TState s ii ee) ->
+        let RiEBC cset _ = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary C))
+        in  TState s (ii:.:RiEBC (cset `setBit` to) (from :-> to))
+                     (ee:.(getBitSet cset:.From from:.To to)) )
+    . termStream ts cs us is
+    . staticCheck (from /= to)
+  {-# Inline termStream #-}
 
 
 instance TermStaticVar EdgeWithSet (EdgeBoundary I) where
@@ -47,4 +60,14 @@ instance TermStaticVar EdgeWithSet (EdgeBoundary I) where
   termStreamIndex _ _  ix = ix
   {-# Inline [0] termStaticVar #-}
   {-# Inline [0] termStreamIndex #-}
+
+-- TODO 17.2.2017 added
+
+instance TermStaticVar EdgeWithSet (EdgeBoundary C) where
+  termStaticVar   _ (CStatic   d) _ = CVariable $ d
+  termStaticVar   _ (CVariable d) _ = CVariable $ d
+  termStreamIndex _ _  ix = ix
+  {-# Inline [0] termStaticVar #-}
+  {-# Inline [0] termStreamIndex #-}
+
 
