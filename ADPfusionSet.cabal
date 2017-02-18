@@ -37,6 +37,10 @@ flag debug
   default:      False
   manual:       True
 
+flag debugoutput
+  description:  Enable debug output, which spams the screen full of index information
+  default:      False
+  manual:       True
 
 
 library
@@ -116,6 +120,9 @@ library
     -O2 -funbox-strict-fields
   if flag(debug)
     cpp-options: -DADPFUSION_CHECKS
+    ghc-options: -fno-ignore-asserts
+  if flag(debugoutput)
+    cpp-options: -DADPFUSION_DEBUGOUTPUT
 
 
 

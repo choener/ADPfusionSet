@@ -57,7 +57,11 @@ instance
           -- constitutes a mask to be used further down.
     where mk (SvS s t y') =
             let
-            in  {- traceShow (set,bnd,rb) $ -} return (SvS s t y', set `clearBit` getBoundary bnd)
+            in  
+#if ADPFUSION_DEBUGOUTPUT
+                traceShow (set,bnd,rb) $
+#endif
+                return (SvS s t y', set `clearBit` getBoundary bnd)
           step (_, 0) = return Done
           step (SvS s t y', bits) =
             let nbnd = lsbZ bits

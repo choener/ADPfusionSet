@@ -59,7 +59,11 @@ instance
       in  staticCheck (pcu - pcc <= z && z <= 1) . singleton . ElmS . RiBs1O $ BS1 cset (Boundary cbnd)
   mkStream S (OFirstLeft z) (BS1 uset (Boundary ubnd)) (BS1 cset (Boundary cbnd))
     = let ------------V--- TODO ???
-      in  staticCheck True . singleton . ElmS . RiBs1O $ BS1 uset (Boundary $ -1)
+      in
+#if ADPFUSION_DEBUGOUTPUT
+          traceShow "O" .
+#endif
+          staticCheck True . singleton . ElmS . RiBs1O $ BS1 uset (Boundary $ -1)
   {-# Inline mkStream #-}
 
 instance (MinSize c) => TableStaticVar u c (BS1 s I) where

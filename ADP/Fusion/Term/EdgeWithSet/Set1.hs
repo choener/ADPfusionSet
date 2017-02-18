@@ -42,7 +42,11 @@ instance
     = map (\(TState s ii ee) ->
         let RiBs1I (BS1 cset (Boundary setNode)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k I))
             (ef:.et) = edgeFromTo (Proxy :: Proxy k) (SetNode setNode) (NewNode newNode)
-        in  TState s (ii:.:RiBs1I (BS1 i (Boundary newNode)))
+        in
+#if ADPFUSION_DEBUGOUTPUT
+            traceShow ("EWSI",i,newNode,'>',cset,setNode,ef,et) $
+#endif
+            TState s (ii:.:RiBs1I (BS1 i (Boundary newNode)))
                      (ee:.(getBitSet cset:.ef:.et) ) )
     . termStream ts cs us is
   -- Begin the edge somewhere, because in the variable case we do not end
@@ -79,7 +83,11 @@ instance
     = map (\(TState s ii ee) ->
         let RiBs1O (BS1 cset (Boundary cbnd)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k O))
             (ef:.et) = edgeFromTo (Proxy :: Proxy k) (SetNode cbnd) (NewNode gbnd)
-        in  TState s (ii:.:RiBs1O (BS1 gset (Boundary gbnd)))
+        in
+#if ADPFUSION_DEBUGOUTPUT
+            traceShow ("EWSO",gset,gbnd,' ',cset,cbnd,ef,et) $
+#endif
+            TState s (ii:.:RiBs1O (BS1 gset (Boundary gbnd)))
                      (ee:.(getBitSet cset:.ef:.et) ) )
     . termStream ts cs us is
     -- TODO needs to be better!
