@@ -287,7 +287,7 @@ instance
                 return $ Skip (SvS s t y', setSucc zeroBits (BitSet $ 2^maxCount-1) cbits)
             | otherwise =
                 let sbits = cbits -- popShiftL shiftMask cbits
-                    cset  = getBitSet $ sbits `setBit` from
+                    cset  = getBitSet $ sbits `setBit` from -- `setBit` to
                 in
 #if ADPFUSION_DEBUGOUTPUT
                     traceShow ("EB/BS1-Last-I/C/step",(BS1 (BitSet cset) (Boundary from))) $
@@ -308,7 +308,7 @@ instance
   addIndexDenseGo (cs:.c) (vs:.CStatic()) (lbs:._) (ubs:.BS1 (BitSet fullSet) _) (us:._) (is:.(from :-> to))
     = map (\(SvS s t y') ->
         let RiEBC (BitSet usedSet) (_ :-> _) = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary C))
-            hereBits = fullSet .&. complement usedSet
+            hereBits = usedSet -- fullSet .&. complement usedSet
             hereSet  = hereBits `setBit` to `setBit` from
         in
 #if ADPFUSION_DEBUGOUTPUT
