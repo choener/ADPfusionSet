@@ -5,6 +5,7 @@ import Data.Proxy
 import Data.Strict.Tuple
 import Data.Vector.Fusion.Stream.Monadic as S
 import Prelude hiding (map)
+import Debug.Trace
 
 import ADP.Fusion.Core
 import Data.Bits.Ordered
@@ -26,11 +27,15 @@ instance
 instance
   ( TstCtx m ts s x0 i0 is (BS1 k I)
   ) => TermStream m (TermSymbol ts Epsilon) s (is:.BS1 k I) where
-  termStream (ts:|Epsilon) (cs:.IStatic r) (us:.u) (is:.BS1 i _)
+  termStream (ts:|Epsilon) (cs:.IStatic r) (us:.BS1 uset ubnd) (is:.BS1 cset cbnd)
     = map (\(TState s ii ee) ->
-              TState s (ii:.:RiBs1I (BS1 i $ -1)) (ee:.()) )
+#if ADPFUSION_DEBUGOUTPUT
+            traceShow ("Empty/BS1/I",BS1 uset ubnd,BS1 cset cbnd) $
+#endif
+            TState s (ii:.:RiBs1I (BS1 0 0)) (ee:.())
+          )
     . termStream ts cs us is
-    . staticCheck (i==0)
+    . staticCheck (cset == 0)
   {-# Inline termStream #-}
 
 instance
@@ -38,7 +43,11 @@ instance
   ) => TermStream m (TermSymbol ts Epsilon) s (is:.BS1 k O) where
   termStream (ts:|Epsilon) (cs:.OStatic r) (us:.BS1 uset ubnd) (is:.BS1 cset cbnd)
     = map (\(TState s ii ee) ->
-              TState s (ii:.:RiBs1O (BS1 cset cbnd)) (ee:.()) )
+#if ADPFUSION_DEBUGOUTPUT
+            traceShow ("Empty/BS1/O",BS1 uset ubnd,BS1 cset cbnd) $
+#endif
+            TState s (ii:.:RiBs1O (BS1 cset cbnd)) (ee:.())
+          )
     . termStream ts cs us is
     . staticCheck (uset == cset)
   {-# Inline termStream #-}

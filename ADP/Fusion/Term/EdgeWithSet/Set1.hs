@@ -5,7 +5,7 @@ import Data.Bits
 import Data.Strict.Tuple
 import Data.Vector.Fusion.Stream.Monadic hiding (flatten)
 import Debug.Trace
-import Prelude hiding (map)
+import Prelude hiding (map,filter)
 import Control.Exception (assert)
 
 import ADP.Fusion.Core
@@ -48,7 +48,12 @@ instance
 #endif
             TState s (ii:.:RiBs1I (BS1 i (Boundary newNode)))
                      (ee:.(getBitSet cset:.ef:.et) ) )
+    . filter (\(TState s ii ee) ->
+        let RiBs1I (BS1 cset (Boundary setNode)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k I))
+        in  popCount cset >= 1)
     . termStream ts cs us is
+    -- only insert edges, if there at least two active nodes!
+    . staticCheck (popCount i >= 2)
   -- Begin the edge somewhere, because in the variable case we do not end
   -- on @b@
   termStream (ts:|EdgeWithSet) (cs:.IVariable r) (us:.u) (is:.BS1 i b)
@@ -82,16 +87,17 @@ instance
   termStream (ts:|EdgeWithSet) (cs:.OStatic r) (us:.u) (is:.BS1 gset (Boundary gbnd))
     = map (\(TState s ii ee) ->
         let RiBs1O (BS1 cset (Boundary cbnd)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k O))
-            (ef:.et) = edgeFromTo (Proxy :: Proxy k) (SetNode cbnd) (NewNode gbnd)
+            (ef:.et) = edgeFromTo (Proxy :: Proxy k) (SetNode gbnd) (NewNode cbnd)
         in
 #if ADPFUSION_DEBUGOUTPUT
             traceShow ("EWSO",gset,gbnd,' ',cset,cbnd,ef,et) $
 #endif
             TState s (ii:.:RiBs1O (BS1 gset (Boundary gbnd)))
-                     (ee:.(getBitSet cset:.ef:.et) ) )
+                     (ee:.(getBitSet gset:.ef:.et) ) )
     . termStream ts cs us is
     -- TODO needs to be better!
     . assert (r==0)
+    . staticCheck (popCount gset >= 1)
 
 instance
   ( TstCtx m ts s x0 i0 is (BS1 k C)

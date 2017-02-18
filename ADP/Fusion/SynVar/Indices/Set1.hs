@@ -61,15 +61,17 @@ instance
 #if ADPFUSION_DEBUGOUTPUT
                 traceShow (set,bnd,rb) $
 #endif
-                return (SvS s t y', set `clearBit` getBoundary bnd)
-          step (_, 0) = return Done
-          step (SvS s t y', bits) =
+                return (SvS s t y', Just $ set `clearBit` getBoundary bnd)
+          step (_, Nothing) = return Done
+          step (SvS s t y', Just 0 ) = return $ Yield (SvS s (t:.BS1 0 0) (y':.:RiBs1I (BS1 0 0)))
+                                                      (SvS s t y', Nothing)
+          step (SvS s t y', Just bits) =
             let nbnd = lsbZ bits
                 nset = set `clearBit` getBoundary bnd
                 bs1  = BS1 nset (Boundary nbnd)
             in  -- traceShow (Boundary nbnd == bnd,bs1) $
                 return $ Yield (SvS s (t:.bs1) (y':.:RiBs1I bs1))
-                               (SvS s t y', bits `clearBit` nbnd)
+                               (SvS s t y', Just $ bits `clearBit` nbnd)
           {-# Inline [0] mk       #-}
           {-# Inline [0] step     #-}
   {-# Inline addIndexDenseGo #-}
@@ -93,17 +95,24 @@ instance
           -- constitutes a mask to be used further down.
     where mk (SvS s t y') =
             let possible = uSet .&. complement cSet
-            in  return (SvS s t y', possible)
+            in
+#if ADPFUSION_DEBUGOUTPUT
+                traceShow ("aIDG/BS1/O/mk",(BS1 uSet uBnd), (BS1 cSet cBnd), possible) $
+#endif
+                return (SvS s t y', possible)
           -- in this case, the current set does not yield something to
           -- "make smaller".
-          step (_, k) | cSet == 0 = return Done
+          step (_, k) | popCount uSet == popCount cSet = return Done
           -- exhausted all options
           step (_, 0) = return Done
           step (SvS s t y', bits) =
             let nbnd = lsbZ bits
                 nset = cSet `setBit` nbnd
                 bs1  = BS1 nset (Boundary nbnd)
-            in  -- traceShow (Boundary nbnd == bnd,bs1) $
+            in
+#if ADPFUSION_DEBUGOUTPUT
+                traceShow ("aIDG/BS1/O/step",(BS1 nset (Boundary nbnd))) $
+#endif
                 return $ Yield (SvS s (t:.bs1) (y':.:RiBs1O bs1))
                                (SvS s t y', bits `clearBit` nbnd)
           {-# Inline [0] mk       #-}
@@ -250,5 +259,81 @@ instance
           !shiftMask = fullSet `clearBit` from `clearBit` to
           {-# Inline [0] mk   #-}
           {-# Inline [0] step #-}
+  {-# Inline addIndexDenseGo #-}
+
+-- | TODO 18.2.2017 added
+
+instance
+  ( IndexHdr s x0 i0 us (BS1 Last I) cs c is (EdgeBoundary C)
+  ) => AddIndexDense s (us:.BS1 Last I) (cs:.c) (is:.EdgeBoundary C) where
+{-
+  addIndexDenseGo (cs:.c) (vs:.CStatic()) (lbs:._) (ubs:.BS1 (BitSet fullSet) _) (us:._) (is:.(from :-> to))
+    = map (\(SvS s t y') ->
+        let RiEBC (BitSet usedSet) (_ :-> _) = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary C))
+            hereBits = fullSet .&. complement usedSet
+            hereSet  = hereBits `setBit` to
+        in  SvS s (t:.BS1 (BitSet hereSet) (Boundary to)) (y':.:RiEBC (BitSet fullSet) (from :-> to)))
+    . addIndexDenseGo cs vs lbs ubs us is
+    -}
+  addIndexDenseGo (cs:.c) (vs:.CVariable ()) (lbs:._) (ubs:.BS1 fullSet _) (us:._) (is:.(from :-> to))
+    = flatten mk step . addIndexDenseGo cs vs lbs ubs us is
+    where mk (SvS s t y') =
+            let RiEBC usedBits (_ :-> _) = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary C))
+            in  assert (usedBits == 0) . return $ (SvS s t y', Just (zeroBits :: BitSet I))
+          step (_, Nothing) = return $ Done
+          step (SvS s t y', Just cbits)
+            | popCount cbits > maxCount = return $ Done
+            | (zeroBits `setBit` from `setBit` to) .&. cbits > 0 =
+                return $ Skip (SvS s t y', setSucc zeroBits (BitSet $ 2^maxCount-1) cbits)
+            | otherwise =
+                let sbits = cbits -- popShiftL shiftMask cbits
+                    cset  = getBitSet $ sbits `setBit` from
+                in
+#if ADPFUSION_DEBUGOUTPUT
+                    traceShow ("EB/BS1-Last-I/C/step",(BS1 (BitSet cset) (Boundary from))) $
+#endif
+                    return $ Yield (SvS s (t:.BS1 (BitSet cset) (Boundary from)) (y':.:RiEBC (BitSet cset) (from :-> to)))
+                                   (SvS s t y', setSucc zeroBits (BitSet $ 2^maxCount-1) cbits)
+          !maxCount = popCount fullSet - 1 -- remove one for @from@, the @to@ bit should be in @rb@
+          !shiftMask = fullSet `clearBit` from `clearBit` to
+          {-# Inline [0] mk   #-}
+          {-# Inline [0] step #-}
+  {-# Inline addIndexDenseGo #-}
+
+-- | TODO 18.2.2017 added
+
+instance
+  ( IndexHdr s x0 i0 us (BS1 Last O) cs c is (EdgeBoundary C)
+  ) => AddIndexDense s (us:.BS1 Last O) (cs:.c) (is:.EdgeBoundary C) where
+  addIndexDenseGo (cs:.c) (vs:.CStatic()) (lbs:._) (ubs:.BS1 (BitSet fullSet) _) (us:._) (is:.(from :-> to))
+    = map (\(SvS s t y') ->
+        let RiEBC (BitSet usedSet) (_ :-> _) = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary C))
+            hereBits = fullSet .&. complement usedSet
+            hereSet  = hereBits `setBit` to `setBit` from
+        in
+#if ADPFUSION_DEBUGOUTPUT
+            traceShow ("EB/BS1-Last-O/C/step",(BS1 (BitSet hereSet) (Boundary to))) $
+#endif
+            SvS s (t:.BS1 (BitSet hereSet) (Boundary to)) (y':.:RiEBC (BitSet fullSet) (from :-> to)))
+    . addIndexDenseGo cs vs lbs ubs us is
+{-
+  addIndexDenseGo (cs:.c) (vs:.CVariable ()) (lbs:._) (ubs:.BS1 fullSet _) (us:._) (is:.(from :-> to))
+    = flatten mk step . addIndexDenseGo cs vs lbs ubs us is
+    where mk (SvS s t y') =
+            let RiEBC usedBits (_ :-> _) = getIndex (getIdx s) (Proxy :: PRI is (EdgeBoundary C))
+            in  assert (usedBits == 0) . return $ (SvS s t y', Just (zeroBits :: BitSet O))
+          step (_, Nothing) = return $ Done
+          step (SvS s t y', Just cbits)
+            | popCount cbits > maxCount = return $ Done
+            | otherwise =
+                let sbits = popShiftL shiftMask cbits
+                    cset  = getBitSet $ sbits `setBit` from
+                in  return $ Yield (SvS s (t:.BS1 (BitSet cset) (Boundary from)) (y':.:RiEBC (BitSet cset) (from :-> to)))
+                                   (SvS s t y', setSucc zeroBits (BitSet $ 2^maxCount-1) cbits)
+          !maxCount = popCount fullSet - 1 -- remove one for @from@, the @to@ bit should be in @rb@
+          !shiftMask = fullSet `clearBit` from `clearBit` to
+          {-# Inline [0] mk   #-}
+          {-# Inline [0] step #-}
+-}
   {-# Inline addIndexDenseGo #-}
 

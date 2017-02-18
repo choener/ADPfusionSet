@@ -36,7 +36,7 @@ instance
   ) => TermStream m (TermSymbol ts Singleton) s (is:.BS1 k I) where
   termStream (ts:|Singleton) (cs:.IStatic r) (us:.u) (is:.BS1 i b)
     = map (\(TState s ii ee) -> let Boundary bb = b in
-              TState s (ii:.:RiBs1I (BS1 i b)) (ee:.bb) )
+              TState s (ii:.:RiBs1I (BS1 i b)) (ee:.(0:.To bb)) )
     . termStream ts cs us is
     . staticCheck (popCount i == 1)
   {-# Inline termStream #-}
@@ -50,15 +50,20 @@ instance
   ( TstCtx m ts s x0 i0 is (BS1 k O)
   ) => TermStream m (TermSymbol ts Singleton) s (is:.BS1 k O) where
   termStream (ts:|Singleton) (cs:.OStatic r) (us:.BS1 uset ubnd) (is:.BS1 cset cbnd)
-    = map (\(TState s ii ee) -> TState s (ii:.:RiBs1O (BS1 cset cbnd)) (ee:.getBoundary cbnd) )
+    = map (\(TState s ii ee) -> 
+        let RiBs1O (BS1 pSet pBnd) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k O))
+            bb = getBoundary pBnd
+        in
+#if ADPFUSION_DEBUGOUTPUT
+            traceShow ("TermStream/Singleton/O",(BS1 cset cbnd),(pSet,pBnd)) $
+#endif
+            TState s (ii:.:RiBs1O (BS1 cset cbnd)) (ee:.(0:.To bb)) )
     . termStream ts cs us is
-    . staticCheck (popCount uset - 1 == popCount cset)
-    -- TODO remove after thought out!
-    . staticCheck False
+    . staticCheck (popCount cset == 0)
   {-# Inline termStream #-}
 
 instance TermStaticVar Singleton (BS1 k I) where
-  termStaticVar   _ (IStatic   d) _ = IStatic   $ d+1
+  termStaticVar   _ (IStatic   d) _ = IVariable $ d+1
   termStaticVar   _ (IVariable d) _ = IVariable $ d+1
   termStreamIndex _ _  ix = ix
   {-# Inline [0] termStaticVar #-}
