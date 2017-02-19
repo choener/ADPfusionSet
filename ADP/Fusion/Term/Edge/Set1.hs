@@ -18,7 +18,7 @@ import Data.Bits
 import Data.Strict.Tuple
 import Data.Vector.Fusion.Stream.Monadic hiding (flatten)
 import Debug.Trace
-import Prelude hiding (map)
+import Prelude hiding (map,filter)
 
 import ADP.Fusion.Core
 import Data.Bits.Ordered
@@ -53,7 +53,11 @@ instance
         let RiBs1I (BS1 cset (Boundary setNode)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k I))
         in  TState s (ii:.:RiBs1I (BS1 i (Boundary newNode)))
                      (ee:.edgeFromTo (Proxy :: Proxy k) (SetNode setNode) (NewNode newNode)) )
+    . filter (\(TState s ii ee) ->
+        let RiBs1I (BS1 cset (Boundary setNode)) = getIndex (getIdx s) (Proxy :: PRI is (BS1 k I))
+        in  popCount cset >= 1)
     . termStream ts cs us is
+    . staticCheck (popCount i >= 2)
   -- Begin the edge somewhere, because in the variable case we do not end
   -- on @b@
   termStream (ts:|Edge) (cs:.IVariable r) (us:.u) (is:.BS1 i b)
