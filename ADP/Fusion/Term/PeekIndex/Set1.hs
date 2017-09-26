@@ -8,8 +8,9 @@ import Prelude hiding (map)
 
 import Data.PrimitiveArray hiding (map)
 
-import ADP.Fusion.Core.Classes
-import ADP.Fusion.Core.Multi
+import ADP.Fusion.Core hiding (PeekIndex, ElmPeekIndex)
+
+import ADP.Fusion.Core.Set1
 
 
 
@@ -43,12 +44,12 @@ instance
 instance
   ( TstCtx m ts s x0 i0 is (BS1 k I)
   ) => TermStream m (TermSymbol ts (PeekIndex (BS1 k I))) s (is:.BS1 k I) where
---  termStream (ts:|PeekIndex) (cs:.IStatic r) (us:.u) (is:.BS1 i b)
---    = map (\(TState s ii ee) -> let Boundary bb = b in
---              TState s (ii:.:RiBs1I (BS1 i b)) (ee:.(0:.To bb)) )
---    . termStream ts cs us is
---    . staticCheck (popCount i == 1)
---  {-# Inline termStream #-}
+  termStream (ts:|PeekIndex) (cs:.IStatic r) (us:.u) (is:.BS1 i b)
+    = map (\(TState s ii ee) ->
+              let RiBs1I bs1 = getIndex (getIdx s) (Proxy :: PRI is (BS1 k I))
+              in TState s (ii:.:RiBs1I bs1) (ee:.bs1) )
+    . termStream ts cs us is
+  {-# Inline termStream #-}
 
 instance TermStaticVar (PeekIndex (BS1 k i)) (BS1 k i) where
   termStaticVar   _ isv _ = isv
